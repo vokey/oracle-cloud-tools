@@ -16,6 +16,12 @@ from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 from oci.exceptions import ConfigFileNotFound, InvalidConfig
 from oci.exceptions import ServiceError
+from oci.core.models import InstanceConfigurationLaunchInstanceDetails
+from oci.core.models import InstanceConfigurationInstanceSourceViaImageDetails
+from oci.core.models import InstanceConfigurationCreateVnicDetails
+from oci.core.models import InstanceConfigurationAvailabilityConfig
+from oci.core.models import InstanceConfigurationLaunchInstanceShapeConfigDetails
+from oci.core.models import InstanceConfigurationInstanceOptions
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(name)s %(levelname)s: %(message)s')
@@ -101,3 +107,46 @@ try:
 except ServiceError as e:
     logger.error("couldn't get subnet id: %s", e)
     sys.exit(1)
+
+
+# Construct oci.core.models.InstanceConfigurationInstanceOptions object,
+# which is used to create oci.core.models.InstanceConfigurationLaunchInstanceDetails.
+instance_options = InstanceConfigurationInstanceOptions(
+    are_legacy_imds_endpoints_disabled=False)
+
+# Construct oci.core.models.InstanceConfigurationLaunchInstanceShapeConfigDetails,
+# which is used to create oci.core.models.InstanceConfigurationLaunchInstanceDetails.
+ocpus = getenv("OCPU")
+memory_in_gbs = getenv("MEMORY_IN_GB")
+shape_config = InstanceConfigurationLaunchInstanceShapeConfigDetails(
+    ocpus=ocpus, memory_in_gbs=memory_in_gbs)
+
+# Construct oci.core.models.InstanceConfigurationAvailabilityConfig object,
+# which is used to create oci.core.models.InstanceConfigurationLaunchInstanceDetails.
+#  Allowed values for this property are: "RESTORE_INSTANCE", "STOP_INSTANCE"
+recovery_action = getenv("RECOVERY_ACTION", "RESTORE_INSTANCE")
+availability_config = InstanceConfigurationAvailabilityConfig(
+    recovery_action=recovery_action)
+
+# Construct oci.core.models.InstanceConfigurationCreateVnicDetails object,
+# which is used to create oci.core.models.InstanceConfigurationLaunchInstanceDetails.
+assign_public_ip = bool(getenv("ASSIGN_PUBLIC_IP"))
+create_vnic_details = InstanceConfigurationCreateVnicDetails(
+    assign_public_ip=assign_public_ip, assign_private_dns_record=True, subnet_id=subnet_id)
+
+# Construct oci.core.models.InstanceConfigurationInstanceSourceViaImageDetails object,
+# it's a subclass of InstanceConfigurationInstanceSourceDetails,
+# which is used to create oci.core.models.InstanceConfigurationLaunchInstanceDetails.
+source_details = InstanceConfigurationInstanceSourceViaImageDetails(
+    source_type="image", image_id=image_id)
+
+# Construct oci.core.models.InstanceConfigurationLaunchInstanceDetails object,
+# which is used to create oci.core.models.InstanceConfigurationInstanceDetails.
+launch_details = InstanceConfigurationLaunchInstanceDetails(compartment_id=compartment_id,
+                                                            availability_domain=domain_name,
+                                                            shape=shape,
+                                                            shape_config=shape_config,
+                                                            availability_config=availability_config,
+                                                            instance_options=instance_options,
+                                                            source_details=source_details,
+                                                            create_vnic_details=create_vnic_details)
