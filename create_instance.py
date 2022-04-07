@@ -60,10 +60,10 @@ logger.info("shape: %s", shape)
 
 operating_system = getenv("OPERATING_SYSTEM")
 operating_system_version = getenv("OPERATING_SYSTEM_VERSION")
-image_name = None
+image_name = None  # pylint: disable-msg=C0103
 if operating_system is None or operating_system_version is None:
     logger.warning("OPERATING_SYSTEM and OPERATING_SYSTEM_VERSION is not set")
-    cnt = 0
+    cnt = 0  # pylint: disable-msg=C0103
     while image_name is None:
         cnt += 1
         if cnt > 3:
@@ -87,11 +87,13 @@ logger.info("domain name: %s", domain_name)
 compute_client = ComputeClient(config)
 
 try:
-    image_id = get_res_value(compute_client.list_images(compartment_id,
-                                                        operating_system=operating_system,
-                                                        operating_system_version=operating_system_version,
-                                                        display_name=image_name,
-                                                        sort_by="TIMECREATED"), "id")
+    image_id = get_res_value(
+        compute_client.list_images(compartment_id,
+                                   operating_system=operating_system,
+                                   operating_system_version=operating_system_version,
+                                   display_name=image_name,
+                                   sort_by="TIMECREATED"),
+        "id")
 except ServiceError as e:
     logger.error("couldn't get image id: %s", e)
     sys.exit(1)
