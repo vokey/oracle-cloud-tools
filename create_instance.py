@@ -13,6 +13,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.response import Response
 from oci.core import ComputeClient
+from oci.core import VirtualNetworkClient
 from oci.exceptions import ConfigFileNotFound, InvalidConfig
 from oci.exceptions import ServiceError
 
@@ -90,3 +91,13 @@ except ServiceError as e:
     sys.exit(1)
 else:
     logger.info("image id: %s", image_id)
+
+vn_client = VirtualNetworkClient(config)
+subnet_name = getenv("SUBNET_NAME")
+# Get subnet id by subnet name, if subnet name is not set, get latest subnet's id
+try:
+    subnet_id = get_res_value(vn_client.list_subnets(
+        compartment_id, display_name=subnet_name, sort_by='TIMECREATED'), 'id')
+except ServiceError as e:
+    logger.error("couldn't get subnet id: %s", e)
+    sys.exit(1)
