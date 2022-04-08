@@ -13,6 +13,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.response import Response
 from oci.core import ComputeClient
+from oci.core import ComputeManagementClient
 from oci.core import VirtualNetworkClient
 from oci.exceptions import ConfigFileNotFound, InvalidConfig
 from oci.exceptions import ServiceError
@@ -22,6 +23,8 @@ from oci.core.models import InstanceConfigurationCreateVnicDetails
 from oci.core.models import InstanceConfigurationAvailabilityConfig
 from oci.core.models import InstanceConfigurationLaunchInstanceShapeConfigDetails
 from oci.core.models import InstanceConfigurationInstanceOptions
+from oci.core.models import CreateInstanceConfigurationDetails
+from oci.core.models import ComputeInstanceDetails
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(name)s %(levelname)s: %(message)s')
@@ -152,3 +155,27 @@ launch_details = InstanceConfigurationLaunchInstanceDetails(compartment_id=compa
                                                             instance_options=instance_options,
                                                             source_details=source_details,
                                                             create_vnic_details=create_vnic_details)
+
+# Construct oci.core.models.ComputeInstanceDetails object,
+# it's a subclass of oci.core.models.InstanceConfigurationInstanceDetails,
+# which is used to create oci.core.models.CreateInstanceConfigurationDetails.
+instance_details = ComputeInstanceDetails(instance_type="compute",
+                                          launch_details=launch_details)
+
+
+# Construct oci.core.models.CreateInstanceConfigurationDetails object,
+# it's a subclass of CreateInstanceConfigurationBase,
+# which is needed for create_instance_configuration.
+create_instance_configuration = CreateInstanceConfigurationDetails(
+    compartment_id=compartment_id,
+    instance_details=instance_details)
+
+
+# Create instance configuration
+compute_mgmt_client = ComputeManagementClient(config)
+try:
+    create_instance_configuration_res = compute_mgmt_client.create_instance_configuration(
+        create_instance_configuration=create_instance_configuration)
+except ServiceError as e:
+    logger.error("couldn't create instance configuration: %s", e)
+    sys.exit(1)
