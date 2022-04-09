@@ -201,6 +201,7 @@ try:
     launch_instance_configuration_res = compute_mgmt_client.launch_instance_configuration(
         instance_configuration_id=instance_configuration_id,
         instance_configuration=ComputeInstanceDetails())
+    logger.info("instance id: %s", launch_instance_configuration_res.data.id)
 except ServiceError as e:
     logger.error("couldn't launch instance configuration: %s", e)
     sys.exit(1)
