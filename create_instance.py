@@ -145,6 +145,17 @@ create_vnic_details = InstanceConfigurationCreateVnicDetails(
 source_details = InstanceConfigurationInstanceSourceViaImageDetails(
     source_type="image", image_id=image_id)
 
+# Add ssh authorization keys to instance configuration
+ssh_key = getenv("SSH_KEY")
+metadata = {}
+if ssh_key is None:
+    logger.warning("SSH_KEY is not set")
+    logger.info(
+        "You need to set at least one ssh key, or you wouldn't be able to login")
+    ssh_key = input("Enter ssh key: ") or None
+else:
+    metadata["ssh_authorized_keys"] = ssh_key
+
 # Construct oci.core.models.InstanceConfigurationLaunchInstanceDetails object,
 # which is used to create oci.core.models.InstanceConfigurationInstanceDetails.
 launch_details = InstanceConfigurationLaunchInstanceDetails(compartment_id=compartment_id,
@@ -154,6 +165,7 @@ launch_details = InstanceConfigurationLaunchInstanceDetails(compartment_id=compa
                                                             availability_config=availability_config,
                                                             instance_options=instance_options,
                                                             source_details=source_details,
+                                                            metadata=metadata,
                                                             create_vnic_details=create_vnic_details)
 
 # Construct oci.core.models.ComputeInstanceDetails object,
@@ -178,4 +190,17 @@ try:
         create_instance_configuration=create_instance_configuration)
 except ServiceError as e:
     logger.error("couldn't create instance configuration: %s", e)
+    sys.exit(1)
+
+instance_configuration_id = get_res_value(
+    create_instance_configuration_res, "id")
+logger.info("instance configuration id: %s", instance_configuration_id)
+
+# Launch instance configuration
+try:
+    launch_instance_configuration_res = compute_mgmt_client.launch_instance_configuration(
+        instance_configuration_id=instance_configuration_id,
+        instance_configuration=ComputeInstanceDetails())
+except ServiceError as e:
+    logger.error("couldn't launch instance configuration: %s", e)
     sys.exit(1)
