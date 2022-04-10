@@ -124,7 +124,7 @@ instance_options = InstanceConfigurationInstanceOptions(
 ocpus = getenv("OCPU")
 memory_in_gbs = getenv("MEMORY_IN_GB")
 shape_config = InstanceConfigurationLaunchInstanceShapeConfigDetails(
-    ocpus=ocpus, memory_in_gbs=memory_in_gbs)
+    ocpus=float(ocpus), memory_in_gbs=float(memory_in_gbs))
 
 # Construct oci.core.models.InstanceConfigurationAvailabilityConfig object,
 # which is used to create oci.core.models.InstanceConfigurationLaunchInstanceDetails.
